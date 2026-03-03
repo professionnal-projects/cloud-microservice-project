@@ -274,6 +274,7 @@ export DOCKER_IMAGE=yourdockerhubusername/cloud-microservice-project:latest
 
 If `DOCKER_IMAGE` is not set, `deploy.sh` automatically falls back to local build mode (`docker compose up --build -d`).
 By default, `deploy.sh` deploys from the current repository path; set `APP_DIR` only if you explicitly want a different deployment directory.
+If `DOMAIN` is set, `deploy.sh` regenerates `nginx/nginx.conf` from `nginx/nginx.ssl.conf` before starting containers, so HTTPS config persists across deployments.
 
 Note: for HTTPS termination in containerized Nginx, Compose maps both ports `80` and `443`, and mounts `/etc/letsencrypt` into the Nginx container.
 

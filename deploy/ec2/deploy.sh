@@ -7,6 +7,7 @@ BRANCH="${BRANCH:-main}"
 SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 APP_DIR="${APP_DIR:-${SCRIPT_ROOT}}"
 ENV_FILE_SOURCE="${ENV_FILE_SOURCE:-}"
+DOMAIN="${DOMAIN:-}"
 
 USE_LOCAL_BUILD="false"
 if [[ -z "${DOCKER_IMAGE:-}" ]]; then
@@ -35,6 +36,11 @@ if [[ -n "${ENV_FILE_SOURCE}" ]]; then
   cp "${ENV_FILE_SOURCE}" .env
 elif [[ ! -f .env ]]; then
   cp .env.example .env
+fi
+
+if [[ -n "${DOMAIN}" ]]; then
+  echo "[4/6] Generating TLS nginx config for ${DOMAIN}..."
+  sed "s|\${DOMAIN_NAME}|${DOMAIN}|g" nginx/nginx.ssl.conf > nginx/nginx.conf
 fi
 
 if [[ "${USE_LOCAL_BUILD}" == "false" ]]; then
