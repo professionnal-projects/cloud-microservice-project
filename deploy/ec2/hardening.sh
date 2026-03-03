@@ -18,6 +18,18 @@ if [[ -z "${EMAIL}" ]]; then
   exit 1
 fi
 
+if [[ "${DOMAIN}" == *.compute-1.amazonaws.com ]] || [[ "${DOMAIN}" == *.amazonaws.com ]]; then
+  echo "ERROR: Let's Encrypt does not issue certificates for AWS default hostnames (${DOMAIN})."
+  echo "Use your own domain/subdomain pointing to the EC2 Elastic IP (A record)."
+  exit 1
+fi
+
+if ! getent ahosts "${DOMAIN}" >/dev/null; then
+  echo "ERROR: Domain ${DOMAIN} does not resolve yet."
+  echo "Create DNS A record to your Elastic IP, wait propagation, then retry."
+  exit 1
+fi
+
 echo "[1/7] Installing security packages..."
 sudo apt-get update -y
 sudo apt-get install -y ufw fail2ban certbot

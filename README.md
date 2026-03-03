@@ -251,6 +251,8 @@ The repository includes automation scripts in `deploy/ec2`:
 
 ### Harden an EC2 instance
 
+Important: Let's Encrypt will not issue certificates for AWS default DNS names such as `ec2-xx-xx-xx-xx.compute-1.amazonaws.com`. Use your own domain/subdomain and point it to your Elastic IP first.
+
 ```bash
 cd cloud-microservice-project
 chmod +x deploy/ec2/*.sh
