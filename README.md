@@ -167,6 +167,16 @@ Service name, environment, ports, runtime settings, and image name are all confi
 
 ## AWS EC2 Deployment Playbook
 
+### Why AWS account was not required yet
+
+Until infrastructure is actually created, this project can be fully developed, tested, containerized, and published from local/CI environments.
+
+Your AWS account is required only when you:
+
+- Create EC2 instances and networking (VPC/Security Group)
+- Attach an Elastic IP or domain DNS records
+- Operate production infrastructure
+
 ### 1) Create AWS Infrastructure
 
 - Launch an Ubuntu 24.04 EC2 instance
@@ -229,6 +239,42 @@ export DOCKER_IMAGE=yourdockerhubusername/cloud-microservice-project:latest
 ```
 
 For stronger availability, move to multi-instance architecture with ALB + Auto Scaling Group.
+
+## Production Security Hardening (Recommended)
+
+The repository includes automation scripts in `deploy/ec2`:
+
+- `bootstrap.sh`: installs Docker + Compose
+- `deploy.sh`: deploys production stack from Docker image
+- `hardening.sh`: configures UFW, fail2ban, and Let's Encrypt
+- `enable_tls_nginx.sh`: generates TLS-enabled `nginx.conf`
+
+### Harden an EC2 instance
+
+```bash
+cd cloud-microservice-project
+chmod +x deploy/ec2/*.sh
+
+export DOMAIN=api.yourdomain.com
+export EMAIL=you@example.com
+export SSH_PORT=22
+
+./deploy/ec2/hardening.sh
+./deploy/ec2/enable_tls_nginx.sh
+```
+
+Then redeploy:
+
+```bash
+export DOCKER_IMAGE=yourdockerhubusername/cloud-microservice-project:latest
+./deploy/ec2/deploy.sh
+```
+
+Verify HTTPS:
+
+```bash
+curl -I https://api.yourdomain.com/health
+```
 
 ## License
 
