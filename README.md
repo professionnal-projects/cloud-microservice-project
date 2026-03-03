@@ -287,3 +287,7 @@ curl -I https://api.yourdomain.com/health
 ## License
 
 This project is provided for portfolio and learning use.
+
+## Portfolio Evidence
+
+For recruiter-ready validation commands, resume bullet points, and interview talking points, see `docs/PORTFOLIO_PROOF.md`.
