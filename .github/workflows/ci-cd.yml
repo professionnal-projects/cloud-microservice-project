@@ -40,6 +40,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      HAS_DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      HAS_DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -50,7 +53,7 @@ jobs:
 
       - name: Log in to Docker Hub
         id: docker_login
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: ${{ env.HAS_DOCKERHUB_USERNAME != '' && env.HAS_DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
