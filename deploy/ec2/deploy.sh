@@ -4,7 +4,8 @@ set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/professionnal-projects/cloud-microservice-project.git}"
 BRANCH="${BRANCH:-main}"
-APP_DIR="${APP_DIR:-/opt/cloud-microservice-project}"
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+APP_DIR="${APP_DIR:-${SCRIPT_ROOT}}"
 ENV_FILE_SOURCE="${ENV_FILE_SOURCE:-}"
 
 USE_LOCAL_BUILD="false"
