@@ -20,7 +20,7 @@ fi
 
 echo "[1/7] Installing security packages..."
 sudo apt-get update -y
-sudo apt-get install -y ufw fail2ban certbot python3-certbot-nginx
+sudo apt-get install -y ufw fail2ban certbot
 
 echo "[2/7] Configuring UFW defaults..."
 sudo ufw default deny incoming
@@ -46,8 +46,17 @@ EOF
 
 sudo systemctl restart fail2ban
 
-echo "[5/7] Requesting TLS certificate from Let's Encrypt..."
-sudo certbot certonly --nginx \
+echo "[5/7] Requesting TLS certificate from Let's Encrypt (standalone)..."
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+if [[ -f "${ROOT_DIR}/docker-compose.yml" ]]; then
+  docker compose -f "${ROOT_DIR}/docker-compose.yml" down || true
+fi
+if [[ -f "${ROOT_DIR}/docker-compose.prod.yml" ]]; then
+  docker compose -f "${ROOT_DIR}/docker-compose.prod.yml" down || true
+fi
+
+sudo certbot certonly --standalone \
   --agree-tos \
   --non-interactive \
   --email "${EMAIL}" \

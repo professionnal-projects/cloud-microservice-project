@@ -246,7 +246,7 @@ The repository includes automation scripts in `deploy/ec2`:
 
 - `bootstrap.sh`: installs Docker + Compose
 - `deploy.sh`: deploys production stack from Docker image
-- `hardening.sh`: configures UFW, fail2ban, and Let's Encrypt
+- `hardening.sh`: configures UFW, fail2ban, and Let's Encrypt (standalone mode)
 - `enable_tls_nginx.sh`: generates TLS-enabled `nginx.conf`
 
 ### Harden an EC2 instance
