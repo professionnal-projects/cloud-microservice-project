@@ -7,10 +7,10 @@ BRANCH="${BRANCH:-main}"
 APP_DIR="${APP_DIR:-/opt/cloud-microservice-project}"
 ENV_FILE_SOURCE="${ENV_FILE_SOURCE:-}"
 
+USE_LOCAL_BUILD="false"
 if [[ -z "${DOCKER_IMAGE:-}" ]]; then
-  echo "ERROR: DOCKER_IMAGE is required."
-  echo "Example: export DOCKER_IMAGE=yourdockerhubusername/cloud-microservice-project:latest"
-  exit 1
+  USE_LOCAL_BUILD="true"
+  echo "DOCKER_IMAGE is not set. Falling back to local build mode."
 fi
 
 echo "[1/6] Preparing application directory: ${APP_DIR}"
@@ -36,17 +36,22 @@ elif [[ ! -f .env ]]; then
   cp .env.example .env
 fi
 
-if ! grep -q '^DOCKER_IMAGE=' .env; then
-  echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> .env
+if [[ "${USE_LOCAL_BUILD}" == "false" ]]; then
+  if ! grep -q '^DOCKER_IMAGE=' .env; then
+    echo "DOCKER_IMAGE=${DOCKER_IMAGE}" >> .env
+  else
+    sed -i "s|^DOCKER_IMAGE=.*|DOCKER_IMAGE=${DOCKER_IMAGE}|" .env
+  fi
+
+  echo "[4/6] Pulling images..."
+  docker compose -f docker-compose.prod.yml pull
+
+  echo "[5/6] Starting production stack (remote image mode)..."
+  docker compose -f docker-compose.prod.yml up -d
 else
-  sed -i "s|^DOCKER_IMAGE=.*|DOCKER_IMAGE=${DOCKER_IMAGE}|" .env
+  echo "[4/6] Building and starting stack (local build mode)..."
+  docker compose up --build -d
 fi
-
-echo "[4/6] Pulling images..."
-docker compose -f docker-compose.prod.yml pull
-
-echo "[5/6] Starting production stack..."
-docker compose -f docker-compose.prod.yml up -d
 
 echo "[6/6] Performing health check..."
 sleep 5
