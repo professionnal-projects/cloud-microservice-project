@@ -165,6 +165,71 @@ Service name, environment, ports, runtime settings, and image name are all confi
 - Pull your image from Docker Hub
 - Start stack using `docker-compose.prod.yml`
 
+## AWS EC2 Deployment Playbook
+
+### 1) Create AWS Infrastructure
+
+- Launch an Ubuntu 24.04 EC2 instance
+- Attach a Security Group with inbound rules:
+	- `22/tcp` from your IP only
+	- `80/tcp` from `0.0.0.0/0`
+- Attach an IAM role only if you plan to pull secrets from AWS services
+
+### 2) Configure GitHub Secrets (for CI push)
+
+In your GitHub repository settings, add:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+Then push to `main`: the CI workflow will build and push your image.
+
+### 3) Bootstrap EC2 Host
+
+SSH into your server and run:
+
+```bash
+git clone https://github.com/professionnal-projects/cloud-microservice-project.git
+cd cloud-microservice-project
+chmod +x deploy/ec2/bootstrap.sh deploy/ec2/deploy.sh
+./deploy/ec2/bootstrap.sh
+```
+
+Reconnect your SSH session to apply Docker group membership.
+
+### 4) Deploy Application on EC2
+
+```bash
+cd cloud-microservice-project
+export DOCKER_IMAGE=yourdockerhubusername/cloud-microservice-project:latest
+./deploy/ec2/deploy.sh
+```
+
+### 5) Verify Deployment
+
+```bash
+curl http://localhost/health
+curl http://localhost/info
+curl http://localhost/metrics
+```
+
+From your machine:
+
+```bash
+curl http://<EC2_PUBLIC_IP>/health
+```
+
+### 6) Zero-Downtime Refresh Pattern (single-host approximation)
+
+For portfolio demonstration, re-run deployment after each new image:
+
+```bash
+export DOCKER_IMAGE=yourdockerhubusername/cloud-microservice-project:latest
+./deploy/ec2/deploy.sh
+```
+
+For stronger availability, move to multi-instance architecture with ALB + Auto Scaling Group.
+
 ## License
 
 This project is provided for portfolio and learning use.
