@@ -65,15 +65,16 @@ jobs:
       - name: Build Docker image (scan target)
         run: docker build --target production -t local/${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
-      - name: Scan Docker image (Trivy)
-        uses: aquasecurity/trivy-action@v0.35.0
-        with:
-          scan-type: image
-          image-ref: local/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: table
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
+      - name: Scan Docker image (Trivy CLI)
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:0.69.3 \
+            image \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            local/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   docker-push:
     name: Build and Push Docker Image
