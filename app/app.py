@@ -285,6 +285,7 @@ def create_app() -> Flask:
         with state_lock:
             uptime = round(time.time() - state["start_time"], 2)
             return {
+                "metrics_format": "json",
                 "app_name": app_name,
                 "app_env": app_env,
                 "app_version": app_version,

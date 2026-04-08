@@ -27,6 +27,7 @@ Production-ready Flask microservice designed for a DevOps portfolio.
 ## Features
 
 - Flask API routes: `/`, `/health`, `/info`, `/metrics`, `/echo` (POST)
+- `/metrics` follows a JSON-only contract for runtime counters and health telemetry
 - Beautiful HTML dashboard on `/` with:
   - Architecture diagram
   - Route live status checks
@@ -36,7 +37,7 @@ Production-ready Flask microservice designed for a DevOps portfolio.
 - Nginx reverse proxy (`:80` to Flask `:5000`)
 - Docker health checks
 - Pytest unit tests for all routes
-- GitHub Actions CI/CD: test, build, push to Docker Hub
+- GitHub Actions CI/CD: tests, dependency scan, image scan, build, push to Docker Hub
 - Environment-based configuration (no sensitive hardcoded values)
 
 ## Architecture (ASCII)
@@ -69,7 +70,7 @@ Production-ready Flask microservice designed for a DevOps portfolio.
 | `/` | GET | HTML dashboard |
 | `/health` | GET | Liveness/health status |
 | `/info` | GET | Service metadata |
-| `/metrics` | GET | Runtime metrics and counters |
+| `/metrics` | GET | Runtime JSON metrics and counters |
 | `/echo` | POST | Echoes JSON payload |
 
 ## Quick Start (Local)
@@ -88,8 +89,8 @@ Production-ready Flask microservice designed for a DevOps portfolio.
 
 3. Open:
 
-	- Dashboard: `http://localhost`
-	- Health: `http://localhost/health`
+  - Dashboard: `http://localhost`
+  - Health: `http://localhost/health`
 
 ## Run Tests
 
@@ -97,6 +98,12 @@ Production-ready Flask microservice designed for a DevOps portfolio.
 python -m pip install -r app/requirements.txt
 pytest app/tests -q
 ```
+
+## Metrics Strategy
+
+- This project exposes operational metrics through `/metrics` as JSON.
+- Current payload includes: `metrics_format`, `app_name`, `app_env`, `app_version`, `uptime_seconds`, `request_count`, `echo_request_count`, `python_version`, `platform`.
+- `metrics_format` is fixed to `json` to keep one stable contract for clients and dashboards.
 
 ## Production Compose (EC2)
 
@@ -119,9 +126,11 @@ Workflow: `.github/workflows/ci-cd.yml`
 - On pull request to `main`:
   - Install dependencies
   - Run unit tests
+  - Run Python dependency security scan (pip-audit)
+  - Run Docker image security scan (Trivy)
   - Validate Docker production build
 - On push to `main`:
-  - Run test job
+  - Run test and security jobs
   - Build and push image to Docker Hub
 
 Required GitHub Secrets:
@@ -181,8 +190,8 @@ Your AWS account is required only when you:
 
 - Launch an Ubuntu 24.04 EC2 instance
 - Attach a Security Group with inbound rules:
-	- `22/tcp` from your IP only
-	- `80/tcp` from `0.0.0.0/0`
+  - `22/tcp` from your IP only
+  - `80/tcp` from `0.0.0.0/0`
 - Attach an IAM role only if you plan to pull secrets from AWS services
 
 ### 2) Configure GitHub Secrets (for CI push)
@@ -239,6 +248,38 @@ export DOCKER_IMAGE=yourdockerhubusername/cloud-microservice-project:latest
 ```
 
 For stronger availability, move to multi-instance architecture with ALB + Auto Scaling Group.
+
+## Operations Runbook (Rollback + Verification)
+
+### Post-deploy verification (EC2)
+
+Run after each deployment:
+
+```bash
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs --tail=80 nginx app
+curl -fsS http://localhost/health
+curl -fsS http://localhost/info
+curl -fsS http://localhost/metrics
+```
+
+Optional external check:
+
+```bash
+curl -I https://api.yourdomain.com/health
+```
+
+### Fast rollback to last known good image
+
+Use a previously published image tag (for example `sha-<commit>` from CI):
+
+```bash
+cd cloud-microservice-project
+export DOCKER_IMAGE=yourdockerhubusername/cloud-microservice-project:sha-<known-good-commit>
+./deploy/ec2/deploy.sh
+```
+
+Then re-run the verification block above.
 
 ## Production Security Hardening (Recommended)
 

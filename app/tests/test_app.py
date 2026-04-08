@@ -57,8 +57,13 @@ def test_metrics_route(client):
     payload = response.get_json()
 
     assert response.status_code == 200
+    assert "application/json" in response.content_type
+    assert payload["metrics_format"] == "json"
     assert payload["app_env"] == "test"
     assert payload["request_count"] >= 2
+    assert isinstance(payload["request_count"], int)
+    assert isinstance(payload["echo_request_count"], int)
+    assert isinstance(payload["uptime_seconds"], (int, float))
     assert "uptime_seconds" in payload
 
 
